@@ -5,7 +5,7 @@
 感谢 @JalinWang 提供[原始版本(用于深圳校区)](https://github.com/JalinWang/HITsz-daily-report)。
 
 感谢 @billchenchina 提供的统一身份认证插件[hitutil](https://github.com/billchenchina/hitutil)
-                          及[原始版本(本部)](https://github.com/billchenchina/yqxx)
+                          及[原始版本(本部)](https://github.com/billchenchina/yqxx)。
 
 [手动疫情上报系统入口](https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xs/yqxx)
 
