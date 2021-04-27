@@ -47,14 +47,15 @@ def get_report_info(session: requests.Session, module_id: str) -> dict:
 def main(args):
     print_log('尝试登录...')
     lose_count = 0
-    while lose_count < 10:
+    s = None
+    while lose_count < 10 and s == None:
         try:
             s = idslogin(args.username, args.password)
         except Exception as e:
             print_log('登录失败')
             print_log(e)
-            lose_count+=1
-    if lose_count==10:
+            lose_count += 1
+    if lose_count == 10:
         return False, '登录失败'
 
     s.headers.update({
