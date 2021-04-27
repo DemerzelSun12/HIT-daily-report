@@ -52,6 +52,7 @@ def main(args):
     while lose_count < 10 and s == None:
         try:
             s = idslogin(args.username, args.password)
+            break
         except LoginFailed as e:
             print_log(f'登录失败:{e}')
             lose_count += 1

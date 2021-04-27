@@ -20,19 +20,21 @@
 
 | Name          | Value                                |
 | ------------- | ------------------------------------ |
-| HIT_USERNAME      | 统一身份认证密码 （学号）        |
+| HIT_USERNAME      | 统一身份认证账号 （学号）        |
 | HIT_PASSWORD      | 统一身份认证密码                 |
 | API_KEY       | 可选。server酱推送的sckey, 或发送电子邮件的密码/Key      |
 | MAIL_TO       | 可选。电子邮件信息，格式"服务器[:端口[U]]:用户名(邮箱)"                   |
 
-![添加Action Secret的步骤](./image/instruction.png)
+[![添加Action Secret的步骤](https://z3.ax1x.com/2021/04/27/g9Q1s0.png)](https://imgtu.com/i/g9Q1s0)
 
-据说fork的仓库会默认关闭action的执行，需要在仓库设置里打开：
-![启用Action的步骤1](./image/enable1.png)
-![启用Action的步骤1](./image/enable2.png)
+Fork的仓库会默认关闭action的执行，需要在仓库设置里打开：
+
+[![启用Action的步骤1](https://z3.ax1x.com/2021/04/27/g9QMzn.png)](https://imgtu.com/i/g9QMzn)
+[![启用Action的步骤2](https://z3.ax1x.com/2021/04/27/g9QlMq.png)](https://imgtu.com/i/g9QlMq)
 
 以上步骤都完工后可以手动运行一次工作流，验证是否可以正常工作
-![手动运行](./image/test_run.png)
+
+[![手动运行](https://z3.ax1x.com/2021/04/27/g9QKRs.png)](https://imgtu.com/i/g9QKRs)
 
 ## 上报情况提醒
 
