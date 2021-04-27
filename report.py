@@ -46,12 +46,16 @@ def get_report_info(session: requests.Session, module_id: str) -> dict:
 
 def main(args):
     print_log('尝试登录...')
-    try:
-        s = idslogin(args.username, args.password)
-    except Exception as e:
-        print_log('登录失败')
-        print_log(e)
-        sys.exit(1)
+    lose_count = 0
+    while lose_count < 10:
+        try:
+            s = idslogin(args.username, args.password)
+        except Exception as e:
+            print_log('登录失败')
+            print_log(e)
+            lose_count+=1
+    if lose_count==10:
+        return False, '登录失败'
 
     s.headers.update({
         'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Redmi K30) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.110 Mobile Safari/537.36'
@@ -60,7 +64,7 @@ def main(args):
     _ = urllib.parse.urlparse(r.url)
     if _.hostname != 'xg.hit.edu.cn':
         print_log('登录失败')
-        sys.exit(1)
+        return False, '登录失败'
     print_log('登录成功')
     r = s.post('https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xs/csh')
     _ = json.loads(r.text)
@@ -74,7 +78,7 @@ def main(args):
         if not yqxxlist['isSuccess']:
             print_log(
                 '无法获取上报信息列表, 原因: %s', yqxxlist['msg'])
-            sys.exit(1)
+            return False, '无法获取上报信息列表'
         yqxxlist = yqxxlist['module']['data']
         for i in yqxxlist:
             if i['rq'] == date.today().isoformat():
@@ -89,11 +93,11 @@ def main(args):
 
                 else:  # 辅导员审核成功 当前状态不可提交！
                     print_log("当前状态不可提交!")
-                    sys.exit(0)
+                    return False, '辅导员审核成功 当前状态不可提交'
                 break
     if not module:
         print_log('未找到疫情信息!')
-        sys.exit(1)
+        return False, '未找到上报信息入口'
 
     report_info = get_report_info(s, module)
     save_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsb/saveYqxx'
@@ -123,7 +127,6 @@ if __name__ == '__main__':
             msg['Subject'] = Header(report_msg, 'utf-8')
             msg['From'] = 'AUTO_REPORT_BOT'
             msg['To'] = mail_addr
-
 
             host = mail_info[0]
             unsafe = False
