@@ -47,7 +47,7 @@ Fork的仓库会默认关闭action的执行，需要在仓库设置里打开：
 
 ### 微信提醒
 
-微信提醒基于[Server酱](http://sc.ftqq.com/)，但是**貌似这个服务对免费用户有限额**，所有为什么不用电邮提醒呢？
+微信提醒基于[Server酱](http://sc.ftqq.com/)，但是**貌似这个服务对免费用户有限额**，所以为什么不用电邮提醒呢？
 
 在Server酱中弄到API_KEY后填写到Secrets的`API_KEY`即可。
 
