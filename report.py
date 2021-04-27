@@ -4,6 +4,7 @@ import requests
 from requests.utils import dict_from_cookiejar
 from lxml import etree
 from hit.ids.login import idslogin
+from hit.exceptions import LoginFailed
 import json
 import re
 import random
@@ -51,9 +52,8 @@ def main(args):
     while lose_count < 10 and s == None:
         try:
             s = idslogin(args.username, args.password)
-        except Exception as e:
-            print_log('登录失败')
-            print_log(e)
+        except LoginFailed as e:
+            print_log(f'登录失败:{e}')
             lose_count += 1
     if lose_count == 10:
         return False, '登录失败'

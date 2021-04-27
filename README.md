@@ -12,7 +12,7 @@
 ## 使用方法
 
 - fork仓库
-- 设置仓库的action secret，添加用户名username、密码password和可选的API_KEY（详细步骤见后文）
+- 设置仓库的action secret，添加用户名hit_username、密码hit_password和可选的通知用Secrets
 - 开启Action（详细步骤见后文）
 - 每天早上8:00（UTC 00:00)可自动定时运行。你可以根据后文内容，设置邮件或微信提醒
 
@@ -20,8 +20,8 @@
 
 | Name          | Value                                |
 | ------------- | ------------------------------------ |
-| USERNAME      | 统一身份认证密码 （学号）        |
-| PASSWORD      | 统一身份认证密码                 |
+| HIT_USERNAME      | 统一身份认证密码 （学号）        |
+| HIT_PASSWORD      | 统一身份认证密码                 |
 | API_KEY       | 可选。server酱推送的sckey, 或发送电子邮件的密码/Key      |
 | MAIL_TO       | 可选。电子邮件信息，格式"服务器[:端口[U]]:用户名(邮箱)"                   |
 
