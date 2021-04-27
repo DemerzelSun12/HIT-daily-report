@@ -1,6 +1,6 @@
 # HIT-daily-report
 
-基于Github Action的定时HIT疫情上报脚本，开箱即用
+基于Github Action的定时HIT疫情上报脚本，开箱即用。并提供邮件/微信提醒功能
 
 感谢 @JalinWang 提供[原始版本(用于深圳校区)](https://github.com/JalinWang/HITsz-daily-report)。
 
@@ -14,17 +14,16 @@
 - fork仓库
 - 设置仓库的action secret，添加用户名username、密码password和可选的API_KEY（详细步骤见后文）
 - 开启Action（详细步骤见后文）
-- 每天早上8:00（UTC 00:00)可自动定时运行，如果填写API_KEY，即可在微信上收到运行结果推送
+- 每天早上8:00（UTC 00:00)可自动定时运行。你可以根据后文内容，设置邮件或微信提醒
 
-消息推送Key申请地址：[Server酱](http://sc.ftqq.com/)
-
-设置仓库的action secret，添加用户名username、密码password和可选的API_KEY：
+设置仓库的Secrets：
 
 | Name          | Value                                |
 | ------------- | ------------------------------------ |
-| username      | 统一身份认证密码 （学号）        |
-| password      | 统一身份认证密码                 |
-| API_KEY       | server酱推送的sckey                   |
+| USERNAME      | 统一身份认证密码 （学号）        |
+| PASSWORD      | 统一身份认证密码                 |
+| API_KEY       | 可选。server酱推送的sckey, 或发送电子邮件的密码/Key      |
+| MAIL_TO       | 可选。电子邮件信息，格式"服务器[:端口[U]]:用户名(邮箱)"                   |
 
 ![添加Action Secret的步骤](./image/instruction.png)
 
@@ -34,6 +33,21 @@
 
 以上步骤都完工后可以手动运行一次工作流，验证是否可以正常工作
 ![手动运行](./image/test_run.png)
+
+## 上报情况提醒
+
+为了防止脚本突然挂了等情况发生，可设置电子邮件或微信提醒。
+
+### 电子邮件提醒
+
+1. 设定Secrets的`MAIL_TO`字段，格式`服务器[:端口[U]]:用户名(邮箱)`，服务器域名和地址可参考[这篇博客](https://blog.csdn.net/zhangge3663/article/details/104293945/)。如果不设置端口，则尝试使用默认。如果加'U'则不使用TLS。
+2. 设定Secrets的`API_KEY`为你的邮箱账户密码，或是SMTP对应的API_KEY。
+
+### 微信提醒
+
+微信提醒基于[Server酱](http://sc.ftqq.com/)，但是**貌似这个服务对免费用户有限额**，所有为什么不用电邮提醒呢？
+
+在Server酱中弄到API_KEY后填写到Secrets的`API_KEY`即可。
 
 ## 如果脚本挂了，或者你想修改一下上报地点什么的
 
