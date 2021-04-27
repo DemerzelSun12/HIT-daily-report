@@ -123,7 +123,7 @@ if __name__ == '__main__':
             msg['Subject'] = Header(report_msg, 'utf-8')
             msg['From'] = 'AUTO_REPORT_BOT'
             msg['To'] = mail_addr
-
+            print_log('尝试发送邮件...')
 
             host = mail_info[0]
             unsafe = False
@@ -146,5 +146,6 @@ if __name__ == '__main__':
                 print_log(e)
 
         else:
+            print_log('发送微信提醒...')
             requests.get(
                 f"https://sc.ftqq.com/{args.api_key}.send?text={report_msg}")
