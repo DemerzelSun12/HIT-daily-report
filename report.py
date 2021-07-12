@@ -139,7 +139,7 @@ if __name__ == '__main__':
             try:
                 s = smtplib.SMTP(host=host) if len(mail_info) == 2 else smtplib.SMTP(
                     host=host, port=int(mail_info[1]))
-                print_log(args.mail_to)
+                print_log(mail_info)
                 s.ehlo_or_helo_if_needed()
                 if not unsafe:
                     s.starttls()
