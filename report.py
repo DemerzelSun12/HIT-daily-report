@@ -6,6 +6,8 @@ from lxml import etree
 from hit.ids.login import idslogin
 from hit.exceptions import LoginFailed
 import json
+from urllib import parse
+from json import loads
 import re
 import random
 import datetime
@@ -21,6 +23,7 @@ from email.header import Header
 parser = argparse.ArgumentParser(description='HIT疫情上报')
 parser.add_argument('username', help='统一身份认证登录用户名（学号）')
 parser.add_argument('password', help='统一身份认证登录密码')
+parser.add_argument('location', help='上报地址')
 parser.add_argument('-k', '--api_key', help='Server酱的SCKEY，或是电邮密码/Key')
 parser.add_argument('-m', '--mail_to', help='电邮信息，格式"服务器[:端口[U]]:用户名"')
 
@@ -29,17 +32,43 @@ def print_log(msg: str) -> None:
     print(f'[{datetime.datetime.now()}] {msg}')
 
 
-def get_report_info() -> dict:
+def get_report_info(location_name: str) -> dict:
     with open('post_data.jsonc', 'r', encoding='utf-8') as jsonfile:
         jsondata = ''.join(
             line for line in jsonfile if not line.startswith('//'))
     model = json.loads(re.sub("//.*", "", jsondata, flags=re.MULTILINE))
-
+    geo_api_url = 'https://restapi.amap.com/v3/geocode/geo?key=be8762efdce0ddfbb9e2165a7cc776bd&s=rsv3&language=zh_cn&extensions=base&appname=https%3A%2F%2Fxg.hit.edu.cn%2Fzhxy-xgzs%2Fxg_mobile%2FxsMrsbNew&csid=47204181-378A-4F55-A94D-548A5BFD0DFD&sdkversion=1.4.16&address='
+    regeo_api_url = 'https://restapi.amap.com/v3/geocode/regeo?key=be8762efdce0ddfbb9e2165a7cc776bd&s=rsv3&language=zh_cn&extensions=base&appname=https%3A%2F%2Fxg.hit.edu.cn%2Fzhxy-xgzs%2Fxg_mobile%2FxsMrsbNew&csid=47204181-378A-4F55-A94D-548A5BFD0DFD&sdkversion=1.4.16&location='
+    addr = location_name
+    addr = parse.quote(addr)
+    geo_response = requests.get(geo_api_url+addr)
+    location = geo_response.json()['geocodes'][0]['location']
+    addr_spl = location.split(',')
+    longitude, latitude = addr_spl[0], addr_spl[1]
+    regeo_response = requests.get(regeo_api_url+location)
+    geo_info = regeo_response.json()['regeocode']
+    addr = geo_info['formatted_address']
+    addr_component = geo_info['addressComponent']
+    province = addr_component['province']
+    city = addr_component['city']
+    district = addr_component['district']
+    street_number = addr_component['streetNumber']
+    street_number = street_number['street']+street_number['number']
+    model['gpsjd'] = float(longitude)
+    model['gpswd'] = float(latitude)
+    model['kzl6'] = province
+    model['kzl7'] = city
+    model['kzl8'] = district
+    model['kzl9'] = street_number
+    model['kzl10'] = addr
+    model['kzl38'] = province
+    model['kzl39'] = city
+    model['kzl40'] = district
     report_info = {
         'info': json.dumps({'model': model})
     }
     print_log('生成上报信息成功')
-    # print_log(report_info)
+    #print_log(report_info)
     return report_info
 
 
@@ -67,9 +96,8 @@ def main(args):
         return False, '登录失败'
     print_log('登录成功')
 
-
-    report_info = get_report_info()
-    save_url='https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/save'
+    report_info = get_report_info(args.location)
+    save_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/save'
 
     response = s.post(save_url, data=report_info)
     print_log(f'POST {save_url} {response.status_code}')
