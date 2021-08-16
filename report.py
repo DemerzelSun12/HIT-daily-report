@@ -29,13 +29,11 @@ def print_log(msg: str) -> None:
     print(f'[{datetime.datetime.now()}] {msg}')
 
 
-def get_report_info(session: requests.Session, module_id: str) -> dict:
+def get_report_info() -> dict:
     with open('post_data.jsonc', 'r', encoding='utf-8') as jsonfile:
         jsondata = ''.join(
             line for line in jsonfile if not line.startswith('//'))
     model = json.loads(re.sub("//.*", "", jsondata, flags=re.MULTILINE))
-
-    model['id'] = module_id
 
     report_info = {
         'info': json.dumps({'model': model})
@@ -68,42 +66,12 @@ def main(args):
         print_log('登录失败')
         return False, '登录失败'
     print_log('登录成功')
-    r = s.post('https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xs/csh')
-    _ = json.loads(r.text)
-    if _['isSuccess']:
-        module = _['module']
-        print_log("获取上报信息成功")
-    else:
-        module = ''
-        r = s.post('https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xs/getYqxxList')
-        yqxxlist = json.loads(r.text)
-        if not yqxxlist['isSuccess']:
-            print_log(
-                '无法获取上报信息列表, 原因: %s', yqxxlist['msg'])
-            return False, '无法获取上报信息列表'
-        yqxxlist = yqxxlist['module']['data']
-        for i in yqxxlist:
-            if i['rq'] == date.today().isoformat():
-                if i['zt'] == '00':  # 未提交
-                    module = i['id']
-                    print_log("使用从前的项目进行疫情上报...")
-                elif i['zt'] == '01':  # 待辅导员审核
-                    # 总是强制重新提交
-                    print_log("你已经提交过每日上报。")
-                    module = i['id']
-                    print_log("使用从前的项目进行疫情上报...")
 
-                else:  # 辅导员审核成功 当前状态不可提交！
-                    print_log("当前状态不可提交!")
-                    return False, '辅导员审核成功 当前状态不可提交'
-                break
-    if not module:
-        print_log('未找到疫情信息!')
-        return False, '未找到上报信息入口'
 
-    report_info = get_report_info(s, module)
-    save_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsb/saveYqxx'
-    response = s.post(save_url, params=report_info)
+    report_info = get_report_info()
+    save_url='https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/save'
+
+    response = s.post(save_url, data=report_info)
     print_log(f'POST {save_url} {response.status_code}')
 
     res_msg = '提交成功' if response.json()['isSuccess'] else '提交失败'

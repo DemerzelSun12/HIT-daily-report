@@ -11,7 +11,9 @@
 
 ## 使用方法
 
-- fork仓库
+- fork并clone仓库
+- 在仓库根目录下，执行`python .\generate_data.py`，生成上报数据包。生成的数据包适用于居住在生成时所在位置、接种了所有疫苗、非风险地区的健康情况
+- 根据自身情况，修改上报数据包`post_data.jsonc`并PUSH
 - 设置仓库的action secret，添加用户名hit_username、密码hit_password和可选的通知用Secrets
 - 开启Action（详细步骤见后文）
 - 每天早上8:00（UTC 00:00)可自动定时运行。你可以根据后文内容，设置邮件或微信提醒
