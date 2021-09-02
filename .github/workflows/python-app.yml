@@ -31,7 +31,8 @@ jobs:
       env:
         USERNAME: ${{ secrets.hit_username }}
         PASSWORD: ${{ secrets.hit_password }}
+        LOCATION: ${{ secrets.location }}
         API_KEY: ${{ secrets.api_key }}
         MAIL_TO: ${{secrets.mail_to}}
       run: |
-        python report.py "$USERNAME" "$PASSWORD"
+        python report.py "$USERNAME" "$PASSWORD" "$LOCATION" -k "$API_KEY" -m "$MAIL_TO"
