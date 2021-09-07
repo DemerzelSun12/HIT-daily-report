@@ -11,8 +11,9 @@
 
 ## 使用方法
 
-- fork仓库
-- 设置仓库的action secret，添加用户名hit_username、密码hit_password和可选的通知用Secrets
+- Fork仓库
+- 根据自身情况，修改上报数据包`post_data.jsonc`，默认为健康、位于非疫区、接种完所有疫苗的情况
+- 设置仓库的action secret，添加用户名`HIT_USERNAME`、密码`HIT_PASSWORD`、上报位置`LOCATION`和可选的通知用Secrets
 - 开启Action（详细步骤见后文）
 - 每天早上8:00（UTC 00:00)可自动定时运行。你可以根据后文内容，设置邮件或微信提醒
 
@@ -22,6 +23,7 @@
 | ------------- | ------------------------------------ |
 | HIT_USERNAME      | 统一身份认证账号 （学号）        |
 | HIT_PASSWORD      | 统一身份认证密码                 |
+| LOCATION      | 上报地址。格式：(X国)XX省XX市XX区XXXX，如黑龙江省哈尔滨市南岗区哈尔滨工业大学。                 |
 | API_KEY       | 可选。server酱推送的sckey, 或发送电子邮件的密码/Key      |
 | MAIL_TO       | 可选。电子邮件信息，格式"服务器[:端口[U]]:用户名(邮箱)"                   |
 
