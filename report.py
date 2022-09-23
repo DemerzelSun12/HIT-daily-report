@@ -32,7 +32,7 @@ def print_log(msg: str) -> None:
     print(f'[{datetime.datetime.now()}] {msg}')
 
 
-def get_report_info(location_name: str) -> dict:
+def get_report_info(location_name: str, token: str) -> dict:
     with open('post_data.jsonc', 'r', encoding='utf-8') as jsonfile:
         jsondata = ''.join(
             line for line in jsonfile if not line.startswith('//'))
@@ -65,10 +65,10 @@ def get_report_info(location_name: str) -> dict:
     model['kzl39'] = city
     model['kzl40'] = district
     report_info = {
-        'info': json.dumps({'model': model})
+        'info': json.dumps({'model': model, 'token': token})
     }
     print_log('生成上报信息成功')
-    #print_log(report_info)
+    # print_log(report_info)
     return report_info
 
 
@@ -95,13 +95,16 @@ def main(args):
         print_log('登录失败')
         return False, '登录失败'
     print_log('登录成功')
-
-    report_info = get_report_info(args.location)
+    token_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xs/getToken'
+    response = s.post(token_url)
+    print_log(f'POST {token_url} {response.status_code}')
+    token = str(response.content)[2:-1]
+    report_info = get_report_info(args.location, token)
     save_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/save'
 
     response = s.post(save_url, data=report_info)
     print_log(f'POST {save_url} {response.status_code}')
-
+    print(response.json())
     res_msg = '提交成功' if response.json()['isSuccess'] else '提交失败'
     return response.json()['isSuccess'], res_msg
 
