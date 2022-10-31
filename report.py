@@ -9,10 +9,9 @@ import json
 from urllib import parse
 from json import loads
 import re
-import random
+import ddddocr
 import datetime
 import argparse
-import sys
 import urllib
 from _datetime import date
 import smtplib
@@ -32,7 +31,7 @@ def print_log(msg: str) -> None:
     print(f'[{datetime.datetime.now()}] {msg}')
 
 
-def get_report_info(location_name: str, token: str) -> dict:
+def get_report_info(location_name: str, token: str, code:str) -> dict:
     with open('post_data.jsonc', 'r', encoding='utf-8') as jsonfile:
         jsondata = ''.join(
             line for line in jsonfile if not line.startswith('//'))
@@ -64,6 +63,7 @@ def get_report_info(location_name: str, token: str) -> dict:
     model['kzl38'] = province
     model['kzl39'] = city
     model['kzl40'] = district
+    model['yzm'] = code
     report_info = {
         'info': json.dumps({'model': model, 'token': token})
     }
@@ -87,7 +87,8 @@ def main(args):
         return False, '登录失败'
 
     s.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Redmi K30) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.110 Mobile Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_1 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) Mobile/14A403 NetType/WIFI Language/zh_CN HuaWei-AnyOffice/1.0.0/cn.edu.hit.welink',
+        'Referer': 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/edit'
     })
     r = s.get('https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/shsj/common')
     _ = urllib.parse.urlparse(r.url)
@@ -95,18 +96,44 @@ def main(args):
         print_log('登录失败')
         return False, '登录失败'
     print_log('登录成功')
+    getmrsb_url='https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/getMrsb'
+    todaydata_url='https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/checkTodayData'
+    jkdy_url= 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/checkMrsbJkdy'#post empty
     token_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xs/getToken'
+
+    code_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/shsj/code'
+    
+
+    prefix_tasks=[todaydata_url,getmrsb_url,jkdy_url]
+
     response = s.post(token_url)
     print_log(f'POST {token_url} {response.status_code}')
     token = str(response.content)[2:-1]
-    report_info = get_report_info(args.location, token)
+    for task in prefix_tasks:
+        task_resp=s.post(task)
+        print_log(f'POST {task} {task_resp.status_code}')
     save_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/save'
-
+    print_log(f'尝试无验证码上报......')
+    report_info = get_report_info(args.location, token, '')
     response = s.post(save_url, data=report_info)
     print_log(f'POST {save_url} {response.status_code}')
     print(response.json())
-    res_msg = '提交成功' if response.json()['isSuccess'] else '提交失败'
-    return response.json()['isSuccess'], res_msg
+    is_success=response.json()['isSuccess']
+    if is_success:
+        return is_success, '提交成功'
+    print_log(f'无验证码上报失败；尝试有验证码上报......')
+    response = requests.get(code_url) # 验证码
+    print_log(f'GET {code_url} {response.status_code}')
+    ocr = ddddocr.DdddOcr()
+    code_ocr = ocr.classification(response.content)
+    print_log(f'Captcha: {code_ocr}')
+    report_info = get_report_info(args.location, token, code_ocr)
+    response = s.post(save_url, data=report_info)
+    print_log(f'POST {save_url} {response.status_code}')
+    print(response.json())
+    is_success=response.json()['isSuccess']
+    res_msg = '提交成功' if is_success else '提交失败'
+    return is_success, res_msg
 
 
 if __name__ == '__main__':
