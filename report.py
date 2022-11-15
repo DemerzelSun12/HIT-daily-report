@@ -26,6 +26,11 @@ parser.add_argument('location', help='上报地址')
 parser.add_argument('-k', '--api_key', help='Server酱的SCKEY，或是电邮密码/Key')
 parser.add_argument('-m', '--mail_to', help='电邮信息，格式"服务器[:端口[U]]:用户名"')
 
+# XG_Err_Messages
+err_no_bot='请勿使用程序上报！'
+err_wrong_captcha='验证码输入错误！'
+err_refresh_required='请勿重复提交，刷新页面后重试！'
+
 # URLs
 geo_api_url = 'https://restapi.amap.com/v3/geocode/geo?key=be8762efdce0ddfbb9e2165a7cc776bd&s=rsv3&language=zh_cn&extensions=base&appname=https%3A%2F%2Fxg.hit.edu.cn%2Fzhxy-xgzs%2Fxg_mobile%2FxsMrsbNew&csid=47204181-378A-4F55-A94D-548A5BFD0DFD&sdkversion=1.4.16&address='
 regeo_api_url = 'https://restapi.amap.com/v3/geocode/regeo?key=be8762efdce0ddfbb9e2165a7cc776bd&s=rsv3&language=zh_cn&extensions=base&appname=https%3A%2F%2Fxg.hit.edu.cn%2Fzhxy-xgzs%2Fxg_mobile%2FxsMrsbNew&csid=47204181-378A-4F55-A94D-548A5BFD0DFD&sdkversion=1.4.16&location='
@@ -124,9 +129,11 @@ def prefix_matters(s):
 def report_matters(s, report_info):
     response = s.post(save_url, data=report_info)
     print_log(f'POST {save_url} {response.status_code}')
-    print(response.json())
-    is_success = response.json()['isSuccess']
-    return is_success
+    response=response.json()
+    print(response)
+    is_success = response['isSuccess']
+    message=response['msg']
+    return is_success,message
 
 
 def code_matters(s):
@@ -137,6 +144,16 @@ def code_matters(s):
     print_log(f'Captcha: {code_ocr}')
     return code_ocr
 
+def run_report_no_code(s,location):
+    token = prefix_matters(s)
+    report_info = get_report_info(location, token, '')
+    return report_matters(s, report_info)
+
+def run_report_with_code(s,location):
+    token = prefix_matters(s)
+    code_ocr = code_matters(s)
+    report_info = get_report_info(location, token, code_ocr)
+    return report_matters(s, report_info)
 
 def main(args):
     s = login_matters(args.username, args.password)
@@ -144,17 +161,20 @@ def main(args):
         return False, '登录失败'
 
     print_log(f'尝试无验证码上报......')
-    token = prefix_matters(s)
-    report_info = get_report_info(args.location, token, '')
-    is_success = report_matters(s, report_info)
+    is_success,message = run_report_no_code(s, args.location)
     if is_success:
         return is_success, '提交成功'
     print_log(f'无验证码上报失败；尝试有验证码上报......')
-    token = prefix_matters(s)
-    code_ocr = code_matters(s)
-    report_info = get_report_info(args.location, token, code_ocr)
-    is_success = report_matters(s, report_info)
-    res_msg = '提交成功' if is_success else '提交失败'
+    
+    is_success,message= run_report_with_code(s, args.location)
+
+    run_report_with_code_failures=1
+
+    while not is_success and message == err_wrong_captcha and run_report_with_code_failures < 10:
+        is_success,message= run_report_with_code(s, args.location)
+        run_report_with_code_failures+=1
+
+    res_msg = '提交成功' if is_success else message
     return is_success, res_msg
 
 
