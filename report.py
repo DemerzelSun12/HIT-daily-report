@@ -26,18 +26,28 @@ parser.add_argument('location', help='上报地址')
 parser.add_argument('-k', '--api_key', help='Server酱的SCKEY，或是电邮密码/Key')
 parser.add_argument('-m', '--mail_to', help='电邮信息，格式"服务器[:端口[U]]:用户名"')
 
+# URLs
+geo_api_url = 'https://restapi.amap.com/v3/geocode/geo?key=be8762efdce0ddfbb9e2165a7cc776bd&s=rsv3&language=zh_cn&extensions=base&appname=https%3A%2F%2Fxg.hit.edu.cn%2Fzhxy-xgzs%2Fxg_mobile%2FxsMrsbNew&csid=47204181-378A-4F55-A94D-548A5BFD0DFD&sdkversion=1.4.16&address='
+regeo_api_url = 'https://restapi.amap.com/v3/geocode/regeo?key=be8762efdce0ddfbb9e2165a7cc776bd&s=rsv3&language=zh_cn&extensions=base&appname=https%3A%2F%2Fxg.hit.edu.cn%2Fzhxy-xgzs%2Fxg_mobile%2FxsMrsbNew&csid=47204181-378A-4F55-A94D-548A5BFD0DFD&sdkversion=1.4.16&location='
+xg_login_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/shsj/common'
+getmrsb_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/getMrsb'
+todaydata_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/checkTodayData'
+jkdy_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/checkMrsbJkdy'  # post empty
+token_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xs/getToken'
+code_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/shsj/code'
+save_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/save'
+prefix_tasks = [todaydata_url, getmrsb_url, jkdy_url]
+
 
 def print_log(msg: str) -> None:
     print(f'[{datetime.datetime.now()}] {msg}')
 
 
-def get_report_info(location_name: str, token: str, code:str) -> dict:
+def get_report_info(location_name: str, token: str, code: str) -> dict:
     with open('post_data.jsonc', 'r', encoding='utf-8') as jsonfile:
         jsondata = ''.join(
             line for line in jsonfile if not line.startswith('//'))
     model = json.loads(re.sub("//.*", "", jsondata, flags=re.MULTILINE))
-    geo_api_url = 'https://restapi.amap.com/v3/geocode/geo?key=be8762efdce0ddfbb9e2165a7cc776bd&s=rsv3&language=zh_cn&extensions=base&appname=https%3A%2F%2Fxg.hit.edu.cn%2Fzhxy-xgzs%2Fxg_mobile%2FxsMrsbNew&csid=47204181-378A-4F55-A94D-548A5BFD0DFD&sdkversion=1.4.16&address='
-    regeo_api_url = 'https://restapi.amap.com/v3/geocode/regeo?key=be8762efdce0ddfbb9e2165a7cc776bd&s=rsv3&language=zh_cn&extensions=base&appname=https%3A%2F%2Fxg.hit.edu.cn%2Fzhxy-xgzs%2Fxg_mobile%2FxsMrsbNew&csid=47204181-378A-4F55-A94D-548A5BFD0DFD&sdkversion=1.4.16&location='
     addr = location_name
     addr = parse.quote(addr)
     geo_response = requests.get(geo_api_url+addr)
@@ -72,13 +82,13 @@ def get_report_info(location_name: str, token: str, code:str) -> dict:
     return report_info
 
 
-def main(args):
+def login_matters(username, password):
     print_log('尝试登录...')
     lose_count = 0
     s = None
     while lose_count < 10 and s == None:
         try:
-            s = idslogin(args.username, args.password)
+            s = idslogin(username, password)
             break
         except LoginFailed as e:
             print_log(f'登录失败:{e}')
@@ -88,50 +98,62 @@ def main(args):
 
     s.headers.update({
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_1 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) Mobile/14A403 NetType/WIFI Language/zh_CN HuaWei-AnyOffice/1.0.0/cn.edu.hit.welink',
-        'Referer': 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/edit'
+        'Referer': 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/edit',
+        'Origin': 'https://xg.hit.edu.cn'
     })
-    r = s.get('https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/shsj/common')
+
+    r = s.get(xg_login_url)
     _ = urllib.parse.urlparse(r.url)
     if _.hostname != 'xg.hit.edu.cn':
         print_log('登录失败')
-        return False, '登录失败'
+        return None
     print_log('登录成功')
-    getmrsb_url='https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/getMrsb'
-    todaydata_url='https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/checkTodayData'
-    jkdy_url= 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/checkMrsbJkdy'#post empty
-    token_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xs/getToken'
+    return s
 
-    code_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/shsj/code'
-    
 
-    prefix_tasks=[todaydata_url,getmrsb_url,jkdy_url]
-
+def prefix_matters(s):
     response = s.post(token_url)
     print_log(f'POST {token_url} {response.status_code}')
     token = str(response.content)[2:-1]
     for task in prefix_tasks:
-        task_resp=s.post(task)
+        task_resp = s.post(task)
         print_log(f'POST {task} {task_resp.status_code}')
-    save_url = 'https://xg.hit.edu.cn/zhxy-xgzs/xg_mobile/xsMrsbNew/save'
-    print_log(f'尝试无验证码上报......')
-    report_info = get_report_info(args.location, token, '')
+    return token
+
+
+def report_matters(s, report_info):
     response = s.post(save_url, data=report_info)
     print_log(f'POST {save_url} {response.status_code}')
     print(response.json())
-    is_success=response.json()['isSuccess']
-    if is_success:
-        return is_success, '提交成功'
-    print_log(f'无验证码上报失败；尝试有验证码上报......')
-    response = requests.get(code_url) # 验证码
+    is_success = response.json()['isSuccess']
+    return is_success
+
+
+def code_matters(s):
+    response = s.get(code_url)  # 验证码
     print_log(f'GET {code_url} {response.status_code}')
     ocr = ddddocr.DdddOcr()
     code_ocr = ocr.classification(response.content)
     print_log(f'Captcha: {code_ocr}')
+    return code_ocr
+
+
+def main(args):
+    s = login_matters(args.username, args.password)
+    if s is None:
+        return False, '登录失败'
+
+    print_log(f'尝试无验证码上报......')
+    token = prefix_matters(s)
+    report_info = get_report_info(args.location, token, '')
+    is_success = report_matters(s, report_info)
+    if is_success:
+        return is_success, '提交成功'
+    print_log(f'无验证码上报失败；尝试有验证码上报......')
+    token = prefix_matters(s)
+    code_ocr = code_matters(s)
     report_info = get_report_info(args.location, token, code_ocr)
-    response = s.post(save_url, data=report_info)
-    print_log(f'POST {save_url} {response.status_code}')
-    print(response.json())
-    is_success=response.json()['isSuccess']
+    is_success = report_matters(s, report_info)
     res_msg = '提交成功' if is_success else '提交失败'
     return is_success, res_msg
 
